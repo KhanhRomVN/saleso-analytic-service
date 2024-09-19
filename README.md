@@ -1,1 +1,0 @@
-# saleso-analytic-service

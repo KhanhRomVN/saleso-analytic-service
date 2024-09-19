@@ -1,5 +1,6 @@
 const { getDB } = require("../config/mongoDB");
 const { ObjectId } = require("mongodb");
+const cron = require("node-cron");
 const Joi = require("joi");
 
 const COLLECTION_NAME = "product_analytic";
@@ -90,5 +91,9 @@ const ProductAnalyticModel = {
     });
   },
 };
+
+cron.schedule("* * * * *", () => {
+  console.log("[Analytic-service] - Node-cron has started!");
+});
 
 module.exports = ProductAnalyticModel;
