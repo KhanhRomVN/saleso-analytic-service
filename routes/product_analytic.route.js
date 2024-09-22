@@ -5,10 +5,10 @@ const router = express.Router();
 
 const routes = [
   {
-    method: "get",
-    path: "/:product_id",
+    method: "put",
+    path: "/visitor/:product_id",
     middleware: [authCustomerToken],
-    handler: ProductAnalyticController.updateViewProduct,
+    handler: ProductAnalyticController.updateVisitor,
   },
 ];
 

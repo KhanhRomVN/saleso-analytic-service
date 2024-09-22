@@ -53,7 +53,10 @@ app.use((err, res) => {
 //* Start Server
 const PORT = process.env.PORT || 8081;
 
-Promise.all([connectDB()])
+// RabbitMQ
+const { runAllConsumers } = require("./queue/consumers");
+
+Promise.all([connectDB(), runAllConsumers()])
   .then(() => {
     server.listen(PORT, () => {
       console.log(`Server is running on port: ${PORT}`);

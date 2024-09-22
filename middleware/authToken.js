@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
-const { UserModel } = require("../models");
 const { createError, sendError } = require("../services/responseHandler");
+const { getUserById } = require("../queue/producers/user-producer");
 
 const verifyToken = (accessToken) => {
   if (!accessToken) {
@@ -16,7 +16,7 @@ const createAuthMiddleware = (roles) => async (req, res, next) => {
 
     let user = null;
     for (const role of roles) {
-      user = await UserModel.getUserById(decoded.user_id, role);
+      user = await getUserById(decoded.user_id, role);
       if (user) break;
     }
 
@@ -49,7 +49,7 @@ const refreshAccessToken = async (req, res, next) => {
   try {
     const decoded = verifyToken(refreshToken, process.env.JWT_SECRET_KEY);
 
-    const user = await UserModel.getUserById(decoded.user_id, decoded.role);
+    const user = await getUserById(decoded.user_id, decoded.role);
 
     if (!user || user.refreshToken !== refreshToken) {
       throw createError("Invalid refresh token", 401, "INVALID_REFRESH_TOKEN");

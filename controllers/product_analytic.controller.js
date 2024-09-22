@@ -1,44 +1,29 @@
 const { ProductAnalyticModel } = require("../models");
-const logger = require("../config/logger");
-
-const handleRequest = async (req, res, operation) => {
-  try {
-    const result = await operation(req);
-    res.status(200).json(result);
-  } catch (error) {
-    logger.error(`Error in ${operation.name}: ${error}`);
-    res
-      .status(error.status || 500)
-      .json({ error: error.message || "Internal Server Error" });
-  }
-};
+const { handleRequest, createError } = require("../services/responseHandler");
 
 const ProductAnalyticController = {
-  createNewProductAnalytic: async (product_id) => {
-    const currentDate = new Date();
-    const month = currentDate.getMonth() + 1;
-    const year = currentDate.getFullYear();
-    const productAnalyticData = {
-      product_id,
-      month,
-      year,
-      total_view: 0,
-      total_wishlist: 0,
-      total_cart: 0,
-      total_sell: 0,
-      total_revenue: 0,
-      discount_used: 0,
-      total_return: 0,
-      return_rate: 0,
-      country_destruction: [],
-    };
-    await ProductAnalyticModel.createNewProductAnalytic(productAnalyticData);
-  },
-
-  updateViewProduct: (req, res) =>
+  newProductAnalytic: (req, res) =>
     handleRequest(req, res, async (req) => {
       const { product_id } = req.params;
-      await ProductAnalyticModel.updateViewProduct(product_id);
+      if (!product_id) {
+        throw createError("Product ID is required", 400, "MISSING_PRODUCT_ID");
+      }
+      const result = await ProductAnalyticModel.newProductAnalytic(product_id);
+      return { message: "Product analytic created successfully", data: result };
+    }),
+
+  updateVisitor: (req, res) =>
+    handleRequest(req, res, async (req) => {
+      const { product_id } = req.params;
+      if (!product_id) {
+        throw createError("Product ID is required", 400, "MISSING_PRODUCT_ID");
+      }
+      const result = await ProductAnalyticModel.updateValueAnalyticProduct(
+        product_id,
+        "visitor",
+        1
+      );
+      return { message: "Visitor count updated successfully", data: result };
     }),
 };
 

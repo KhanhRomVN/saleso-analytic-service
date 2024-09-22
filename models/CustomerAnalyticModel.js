@@ -1,12 +1,12 @@
 const { getDB } = require("../config/mongoDB");
-const { ObjectId } = require("mongodb");
 const Joi = require("joi");
 
 const COLLECTION_NAME = "customer_analytic";
 const COLLECTION_SCHEMA = Joi.object({
   customer_id: Joi.string().required(),
   favorite_categories: Joi.array().items(Joi.string()),
-  customer_score: Joi.number().required(),
+  score: Joi.number().required(),
+  rank: Joi.number().required(),
 }).options({ abortEarly: false });
 
 const handleDBOperation = async (operation) => {
