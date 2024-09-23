@@ -10,13 +10,9 @@ const startProductAnalyticConsumer = async () => {
 
     const queue = "update_product_analytic_queue";
     await channel.assertQueue(queue, { durable: true });
-    console.log(`[Analytic Service] Waiting for messages in ${queue}`);
 
     channel.consume(queue, async (msg) => {
       const { product_id, key, value } = JSON.parse(msg.content.toString());
-      console.log(
-        `Received update request for Product ID: ${product_id}, Key: ${key}, Value: ${value}`
-      );
 
       try {
         await ProductAnalyticModel.updateValueAnalyticProduct(
@@ -24,7 +20,6 @@ const startProductAnalyticConsumer = async () => {
           key,
           value
         );
-        console.log(`Updated analytic for Product ID: ${product_id}`);
       } catch (error) {
         console.error("Error updating product analytic:", error);
       }

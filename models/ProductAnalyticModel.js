@@ -105,8 +105,6 @@ const ProductAnalyticModel = {
   },
 };
 
-cron.schedule("* * * * *", () => {
-  console.log("[Analytic-service] - Node-cron has started!");
-});
+cron.schedule("* * * * *", () => {});
 
 module.exports = ProductAnalyticModel;
