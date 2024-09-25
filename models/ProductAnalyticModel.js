@@ -6,21 +6,24 @@ const Joi = require("joi");
 const COLLECTION_NAME = "product_analytic";
 const COLLECTION_SCHEMA = Joi.object({
   product_id: Joi.string().required(),
+  // time
   year: Joi.number().required(),
   month: Joi.number().required(),
   revenue: Joi.number().required(),
   visitor: Joi.number().required(),
+  // wishlist
   wishlist_added: Joi.number().required(),
-  wishlist_removed: Joi.number().required(),
+  // cart
   cart_added: Joi.number().required(),
-  cart_removed: Joi.number().required(),
+  // order
   orders_placed: Joi.number().required(),
-  orders_cancelled: Joi.number().required(),
-  orders_accepted: Joi.number().required(),
-  orders_refused: Joi.number().required(),
+  orders_successful: Joi.number().required(),
+  order_failed: Joi.number().required(),
+  // reversal
   reversal_requested: Joi.number().required(),
-  reversal_accepted: Joi.number().required(),
-  reversal_refused: Joi.number().required(),
+  reversal_successful: Joi.number().required(),
+  reversal_failed: Joi.number().required(),
+  // discount
   discount_applications: Joi.number().required(),
 }).options({ abortEarly: false });
 
@@ -101,6 +104,110 @@ const ProductAnalyticModel = {
           { $inc: { [key]: value } }
         );
       }
+    });
+  },
+
+  getMonthlyAnalytic: async (listProductId) => {
+    return handleDBOperation(async (collection) => {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+
+      const productAnalyticData = await collection
+        .find({
+          product_id: { $in: listProductId },
+          year: year,
+          month: month,
+        })
+        .toArray();
+
+      return productAnalyticData;
+    });
+  },
+
+  getYearlyAnalytic: async (listProductId, type) => {
+    return handleDBOperation(async (collection) => {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+
+      // Tạo pipeline cho aggregation
+      const pipeline = [
+        {
+          $match: {
+            product_id: { $in: listProductId },
+            year: year,
+          },
+        },
+        {
+          $group: {
+            _id: "$month",
+            total: { $sum: `$${type}` },
+          },
+        },
+        {
+          $sort: { _id: 1 },
+        },
+      ];
+
+      const result = await collection.aggregate(pipeline).toArray();
+
+      // Tạo mảng kết quả với 12 phần tử, mặc định là 0
+      const monthlyData = Array(12).fill(0);
+
+      // Điền dữ liệu vào mảng kết quả
+      result.forEach((item) => {
+        monthlyData[item._id - 1] = item.total;
+      });
+
+      return monthlyData;
+    });
+  },
+
+  top5ProductAnalytic: async (listProductId) => {
+    return handleDBOperation(async (collection) => {
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+
+      const pipeline = [
+        {
+          $match: {
+            product_id: { $in: listProductId },
+            year: year,
+          },
+        },
+        {
+          $group: {
+            _id: "$product_id",
+            total_revenue: { $sum: "$revenue" },
+            total_orders_successful: { $sum: "$orders_successful" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            product_id: "$_id",
+            total_revenue: 1,
+            total_orders_successful: 1,
+            score: { $add: ["$total_revenue", "$total_orders_successful"] },
+          },
+        },
+        {
+          $sort: { score: -1 },
+        },
+        {
+          $limit: 5,
+        },
+        {
+          $project: {
+            product_id: 1,
+            total_revenue: 1,
+            total_orders_successful: 1,
+            _id: 0,
+          },
+        },
+      ];
+
+      return await collection.aggregate(pipeline).toArray();
     });
   },
 };
